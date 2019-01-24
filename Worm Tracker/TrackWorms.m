@@ -45,15 +45,15 @@ end
 % -------------
 for MN = 1:length(MovieNames)
     
-    FileInfo = aviinfo(MovieNames{MN});
+    FileInfo = VideoReader(MovieNames{MN});
     Tracks = [];
     
     % Analyze Movie
     % -------------
-    for Frame = 1:FileInfo.NumFrames
+    for Frame = 1:FileInfo.Duration * FileInfo.FrameRate
         
         % Get Frame
-        Mov = aviread(MovieNames{MN}, Frame);
+        Mov = read(FileInfo, Frame);%aviread(MovieNames{MN}, Frame);
         
         % Convert frame to a binary image 
         if WormTrackerPrefs.AutoThreshold       % use auto thresholding
