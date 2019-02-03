@@ -50,26 +50,29 @@ for MN = 1:length(MovieNames)
     
     % Analyze Movie
     % -------------
-    for Frame = 1:FileInfo.Duration * FileInfo.FrameRate
-        
+    %for Frame = 1:FileInfo.Duration * FileInfo.FrameRate
+    %frames = 1:Fileinfo.Duration * 
+    while FileInfo.hasFrame()
         % Get Frame
-        Mov = read(FileInfo, Frame);%aviread(MovieNames{MN}, Frame);
+        frame = readFrame(FileInfo);%aviread(MovieNames{MN}, Frame);
+        
+        % Make sure it is gray scale
         
         % Convert frame to a binary image 
         if WormTrackerPrefs.AutoThreshold       % use auto thresholding
-            Level = graythresh(Mov.cdata) + WormTrackerPrefs.CorrectFactor;
+            Level = graythresh(frame) + WormTrackerPrefs.CorrectFactor;
             Level = max(min(Level,1) ,0);
         else
             Level = WormTrackerPrefs.ManualSetLevel;
         end
         if WormTrackerPrefs.DarkObjects
-            BW = ~im2bw(Mov.cdata, Level);  % For tracking dark objects on a bright background
+            BW = ~im2bw(frame, Level);  % For tracking dark objects on a bright background
         else
-            BW = im2bw(Mov.cdata, Level);  % For tracking bright objects on a dark background
+            BW = im2bw(frame, Level);  % For tracking bright objects on a dark background
         end
         
         % Identify all objects
-        [L,NUM] = BWLABEL(BW);
+        [L,NUM] = bwlabel(BW);
         STATS = regionprops(L, {'Area', 'Centroid', 'FilledArea', 'Eccentricity'});
         
         % Identify all worms by size, get their centroid coordinates
@@ -100,7 +103,7 @@ for MN = 1:length(MovieNames)
                     (abs(WormSizes(MinIndex) - Tracks(ActiveTracks(i)).LastSize) < WormTrackerPrefs.SizeChangeThreshold)
                 Tracks(ActiveTracks(i)).Path = [Tracks(ActiveTracks(i)).Path; WormCoordinates(MinIndex, :)];
                 Tracks(ActiveTracks(i)).LastCoordinates = WormCoordinates(MinIndex, :);
-                Tracks(ActiveTracks(i)).Frames = [Tracks(ActiveTracks(i)).Frames, Frame];
+                Tracks(ActiveTracks(i)).Frames = [Tracks(ActiveTracks(i)).Frames, frame];
                 Tracks(ActiveTracks(i)).Size = [Tracks(ActiveTracks(i)).Size, WormSizes(MinIndex)];
                 Tracks(ActiveTracks(i)).LastSize = WormSizes(MinIndex);
                 Tracks(ActiveTracks(i)).FilledArea = [Tracks(ActiveTracks(i)).FilledArea, WormFilledAreas(MinIndex)];
@@ -125,7 +128,7 @@ for MN = 1:length(MovieNames)
             Tracks(Index).Active = 1;
             Tracks(Index).Path = WormCoordinates(i,:);
             Tracks(Index).LastCoordinates = WormCoordinates(i,:);
-            Tracks(Index).Frames = Frame;
+            Tracks(Index).Frames = frame;
             Tracks(Index).Size = WormSizes(i);
             Tracks(Index).LastSize = WormSizes(i);
             Tracks(Index).FilledArea = WormFilledAreas(i);
@@ -133,9 +136,9 @@ for MN = 1:length(MovieNames)
         end
         
         % Display every PlotFrameRate'th frame
-        if ~mod(Frame, PlotFrameRate)
+        if ~mod(frame, PlotFrameRate)
             PlotFrame(WTFigH, Mov, Tracks);
-            FigureName = ['Tracking Results for Frame ', num2str(Frame)];
+            FigureName = ['Tracking Results for Frame ', num2str(frame)];
             set(WTFigH, 'Name', FigureName);
 
             if WormTrackerPrefs.PlotRGB
