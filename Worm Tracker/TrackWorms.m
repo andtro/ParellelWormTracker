@@ -52,11 +52,14 @@ for MN = 1:length(MovieNames)
     % -------------
     %for Frame = 1:FileInfo.Duration * FileInfo.FrameRate
     %frames = 1:Fileinfo.Duration * 
+    frameNumber = 0;
     while FileInfo.hasFrame()
         % Get Frame
+        frameNumber = frameNumber + 1;
         frame = readFrame(FileInfo);%aviread(MovieNames{MN}, Frame);
         
         % Make sure it is gray scale
+        frame = rgb2gray(frame);
         
         % Convert frame to a binary image 
         if WormTrackerPrefs.AutoThreshold       % use auto thresholding
@@ -103,7 +106,7 @@ for MN = 1:length(MovieNames)
                     (abs(WormSizes(MinIndex) - Tracks(ActiveTracks(i)).LastSize) < WormTrackerPrefs.SizeChangeThreshold)
                 Tracks(ActiveTracks(i)).Path = [Tracks(ActiveTracks(i)).Path; WormCoordinates(MinIndex, :)];
                 Tracks(ActiveTracks(i)).LastCoordinates = WormCoordinates(MinIndex, :);
-                Tracks(ActiveTracks(i)).Frames = [Tracks(ActiveTracks(i)).Frames, frame];
+                Tracks(ActiveTracks(i)).Frames = [Tracks(ActiveTracks(i)).Frames, frameNumber];
                 Tracks(ActiveTracks(i)).Size = [Tracks(ActiveTracks(i)).Size, WormSizes(MinIndex)];
                 Tracks(ActiveTracks(i)).LastSize = WormSizes(MinIndex);
                 Tracks(ActiveTracks(i)).FilledArea = [Tracks(ActiveTracks(i)).FilledArea, WormFilledAreas(MinIndex)];
@@ -128,7 +131,7 @@ for MN = 1:length(MovieNames)
             Tracks(Index).Active = 1;
             Tracks(Index).Path = WormCoordinates(i,:);
             Tracks(Index).LastCoordinates = WormCoordinates(i,:);
-            Tracks(Index).Frames = frame;
+            Tracks(Index).Frames = frameNumber;
             Tracks(Index).Size = WormSizes(i);
             Tracks(Index).LastSize = WormSizes(i);
             Tracks(Index).FilledArea = WormFilledAreas(i);
@@ -136,9 +139,9 @@ for MN = 1:length(MovieNames)
         end
         
         % Display every PlotFrameRate'th frame
-        if ~mod(frame, PlotFrameRate)
-            PlotFrame(WTFigH, Mov, Tracks);
-            FigureName = ['Tracking Results for Frame ', num2str(frame)];
+        if ~mod(frameNumber, PlotFrameRate)
+            PlotFrame(WTFigH, frame, Tracks);
+            FigureName = ['Tracking Results for Frame ', num2str(frameNumber)];
             set(WTFigH, 'Name', FigureName);
 
             if WormTrackerPrefs.PlotRGB
