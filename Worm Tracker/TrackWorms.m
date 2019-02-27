@@ -10,24 +10,11 @@ PlotFrameRate = str2num(get(findobj('Tag', 'PLOT_FRAME_RATE'), 'String'));
 % Get movies to track
 % -------------------
 MovieNames = {};
-for i = 1:5
-    Mname = eval(['get(findobj(''Tag'', ''MOVIE_NAME_' num2str(i) '''), ''String'')']);
-    Mstart = eval(['get(findobj(''Tag'', ''MOVIE_START_' num2str(i) '''), ''String'')']);
-    Mend = eval(['get(findobj(''Tag'', ''MOVIE_END_' num2str(i) '''), ''String'')']);
-    if ~isempty(Mname)
-        if strcmp(Mname(length(Mname)-3:length(Mname)), '.avi')
-            Mname(length(Mname)-3:length(Mname)) = '';
-        end
-        if ~isempty(Mstart) && ~isempty(Mend)
-            for j = str2num(Mstart):str2num(Mend)
-                MovieNames{length(MovieNames)+1} = [Mname num2str(j) '.avi'];
-            end
-        else
-            MovieNames{length(MovieNames)+1} = [Mname '.avi'];
-        end
-    end
-end
 
+%Mname = eval(['get(findobj(''Tag'', ''MOVIE_NAME_' num2str(i) '''), ''String'')']);
+Mname = uigetfile;
+%Mstart = eval(['get(findobj(''Tag'', ''MOVIE_START_' num2str(1) '''), ''String'')']);
+%Mend = eval(['get(findobj(''Tag'', ''MOVIE_END_' num2str(1) '''), ''String'')']);
 
 % Setup figure for plotting tracker results
 % -----------------------------------------
@@ -40,26 +27,25 @@ else
     figure(WTFigH);
 end
 
-
 % Start Tracker
 % -------------
-for MN = 1:length(MovieNames)
-    
-    FileInfo = VideoReader(MovieNames{MN});
+    FileInfo = VideoReader(Mname);
     Tracks = [];
-    
+    tic;
     % Analyze Movie
     % -------------
     %for Frame = 1:FileInfo.Duration * FileInfo.FrameRate
     %frames = 1:Fileinfo.Duration * 
     frameNumber = 0;
     while FileInfo.hasFrame()
+        disp("here " + toc);tic;
         % Get Frame
         frameNumber = frameNumber + 1;
         frame = readFrame(FileInfo);%aviread(MovieNames{MN}, Frame);
         
         % Make sure it is gray scale
-        frame = rgb2gray(frame);
+        %frame = rgb2gray(frame);
+        disp("here1 " + toc);tic;
         
         % Convert frame to a binary image 
         if WormTrackerPrefs.AutoThreshold       % use auto thresholding
@@ -73,10 +59,13 @@ for MN = 1:length(MovieNames)
         else
             BW = im2bw(frame, Level);  % For tracking bright objects on a dark background
         end
+        disp("here2 " + toc);tic;
         
         % Identify all objects
         [L,NUM] = bwlabel(BW);
+        disp("here2.5 " + toc);tic;
         STATS = regionprops(L, {'Area', 'Centroid', 'FilledArea', 'Eccentricity'});
+        disp("here3 " + toc);tic;
         
         % Identify all worms by size, get their centroid coordinates
         WormIndices = find([STATS.Area] > WormTrackerPrefs.MinWormArea & ...
@@ -87,6 +76,7 @@ for MN = 1:length(MovieNames)
         WormSizes = [STATS(WormIndices).Area];
         WormFilledAreas = [STATS(WormIndices).FilledArea];
         WormEccentricities = [STATS(WormIndices).Eccentricity];
+        disp("here4 " + toc);tic;
         
         % Track worms 
         % ----------- 
@@ -96,6 +86,7 @@ for MN = 1:length(MovieNames)
             ActiveTracks = [];
         end
         
+        disp("here5 " + toc);tic;
         % Update active tracks with new coordinates
         for i = 1:length(ActiveTracks)
             DistanceX = WormCoordinates(:,1) - Tracks(ActiveTracks(i)).LastCoordinates(1);
@@ -123,6 +114,7 @@ for MN = 1:length(MovieNames)
                 end
             end
         end
+        disp("here6 " + toc);tic;
         
         % Start new tracks for coordinates not assigned to existing tracks
         NumTracks = length(Tracks);
@@ -137,25 +129,39 @@ for MN = 1:length(MovieNames)
             Tracks(Index).FilledArea = WormFilledAreas(i);
             Tracks(Index).Eccentricity = WormEccentricities(i);
         end
+        disp("here7 " + toc);tic;
         
         % Display every PlotFrameRate'th frame
         if ~mod(frameNumber, PlotFrameRate)
+            disp("here7.1 " + toc);tic;
             PlotFrame(WTFigH, frame, Tracks);
+            disp("here7.15 " + toc);tic;
+            
             FigureName = ['Tracking Results for Frame ', num2str(frameNumber)];
+            disp("here7.2 " + toc);tic;
             set(WTFigH, 'Name', FigureName);
 
             if WormTrackerPrefs.PlotRGB
+                disp("here7.3 " + toc);tic;
                 RGB = label2rgb(L, @jet, 'k');
+                disp("here7.4 " + toc);tic;
                 figure(6)
+                disp("here7.5 " + toc);tic;
                 set(6, 'Name', FigureName);
+                disp("here7.6 " + toc);tic;
                 imshow(RGB);
+                disp("here7.7 " + toc);tic;
                 hold on
+                disp("here7.8 " + toc);tic;
                 if ~isempty(Tracks)
                     ActiveTracks = find([Tracks.Active]);
                 else
                     ActiveTracks = [];
                 end
+                disp("here7.9 " + toc);tic;
+            
                 for i = 1:length(ActiveTracks)
+                    
                     plot(Tracks(ActiveTracks(i)).LastCoordinates(1), ...
                         Tracks(ActiveTracks(i)).LastCoordinates(2), 'wo');
                 end
@@ -175,6 +181,7 @@ for MN = 1:length(MovieNames)
             	pause;
             end
         end
+        disp("here8 " + toc);tic;
         
     end    % END for Frame = 1:FileInfo.NumFrames
     

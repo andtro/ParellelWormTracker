@@ -14,6 +14,8 @@ else
     ActiveTracks = [];
 end
 
+%active = size(ActiveTracks.path)[1];
+
 for i = 1:length(ActiveTracks)
     figure(FigH)
 %   cmap = colormap;    'Color', cmap(ActiveTracks(i)*10,:)
@@ -24,5 +26,5 @@ for i = 1:length(ActiveTracks)
 %   plot(Tracks(ActiveTracks(i)).LastCoordinates(1), Tracks(ActiveTracks(i)).LastCoordinates(2), 'wo');
 end
 
-pause(1);
+%pause(0.001);
 hold off;    % So not to see movie replay
