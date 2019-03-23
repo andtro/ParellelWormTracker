@@ -1,7 +1,8 @@
 function TrackWorms()
 
 global WormTrackerPrefs
-
+[myfileName, myPath] = uigetfile('*.avi');
+Mname = strcat(myPath, myfileName);
 PlotFrameRate = str2num(get(findobj('Tag', 'PLOT_FRAME_RATE'), 'String'));    
 % Display tracking results every 'PlotFrameRate' frames - increase
 % this value (in GUI) to get faster tracking performance
@@ -12,7 +13,6 @@ PlotFrameRate = str2num(get(findobj('Tag', 'PLOT_FRAME_RATE'), 'String'));
 MovieNames = {};
 
 %Mname = eval(['get(findobj(''Tag'', ''MOVIE_NAME_' num2str(i) '''), ''String'')']);
-Mname = uigetfile;
 %Mstart = eval(['get(findobj(''Tag'', ''MOVIE_START_' num2str(1) '''), ''String'')']);
 %Mend = eval(['get(findobj(''Tag'', ''MOVIE_END_' num2str(1) '''), ''String'')']);
 
@@ -59,13 +59,17 @@ end
         else
             BW = im2bw(frame, Level);  % For tracking bright objects on a dark background
         end
-        disp("here2 " + toc);tic;
         
         % Identify all objects
+        se = strel('square', 3);
+        BW = imerode(BW, se);
+        BW = imdilate(BW, se);
         [L,NUM] = bwlabel(BW);
         disp("here2.5 " + toc);tic;
-        STATS = regionprops(L, {'Area', 'Centroid', 'FilledArea', 'Eccentricity'});
+        %STATS1 = regionprops(L, {'Eccentricity'});
         disp("here3 " + toc);tic;
+        STATS = regionprops(L, {'Area', 'Centroid', 'FilledArea', 'Eccentricity'});
+        disp("here3.5 " + toc);tic;
         
         % Identify all worms by size, get their centroid coordinates
         WormIndices = find([STATS.Area] > WormTrackerPrefs.MinWormArea & ...
